@@ -6,8 +6,8 @@ class ApplicationController < ActionController::API
   # protect_from_forgery with: :exception
 
   def authenticated?
-    authenticate_or_request_with_http_basic {
-      |u,p| User.where( username: u, password: p ).present?
-    }
+    authenticate_or_request_with_http_basic do
+      |u, p| User.where(username: u, password: p).present?
+    end
   end
 end
