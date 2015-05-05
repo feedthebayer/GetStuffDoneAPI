@@ -6,25 +6,41 @@ class Api::ListsController < ApplicationController
     if list.save
       render json: list
     else
-      render json: { errors: list.errors.full_messages },
-        status: :unprocessable_entity
+      error(:unprocessable_entity, list.errors.full_messages)
     end
   end
 
   def show
-    list = List.find_by(id: params[:id])
+    begin
+      list = List.find(params[:id])
 
-    if !list
+      if not_mine?(list)
+        not_yours_error
+      else
+        render json: list
+      end
+    rescue ActiveRecord::RecordNotFound
       error(:not_found, "That list doesn't exist")
-    elsif list.user != current_user
-      error(:unprocessable_entity, "That's not your list!")
-    else
-      render json: list
     end
   end
 
   def index
     render json: current_user.lists
+  end
+
+  def destroy
+    begin
+      list = List.find(params[:id])
+
+      if not_mine?(list)
+        not_yours_error
+      else
+        list.destroy
+        render json: {}, status: :no_content
+      end
+    rescue ActiveRecord::RecordNotFound
+      error(:not_found, "That list doesn't exist")
+    end
   end
 
   private

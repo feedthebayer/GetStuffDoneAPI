@@ -23,4 +23,12 @@ class ApplicationController < ActionController::API
 
     render json: response.to_json, status: status
   end
+
+  def not_yours_error
+    error(:unprocessable_entity, "That doesn't belong to you!")
+  end
+
+  def not_mine?(resource)
+    resource.user != current_user
+  end
 end

@@ -2,36 +2,58 @@ class Api::ItemsController < ApplicationController
   before_action :authenticated?
 
   def create
-    if !list = List.find_by(id: params[:list_id])
-      error(:not_found, "That list doesn't exist")
-    elsif list.user != current_user
-      error(:unprocessable_entity, "You can't add to someone else's list!")
-    else
-      item = list.items.new(item_params)
-      if item.save
-        render json: item
+    begin
+      list = List.find(params[:list_id])
+
+      if not_mine?(list)
+        not_yours_error
       else
-        render json: { errors: item.errors.full_messages },
-          status: :unprocessable_entity
+        item = list.items.new(item_params)
+        if item.save
+          render json: item
+        else
+          render json: { errors: item.errors.full_messages },
+            status: :unprocessable_entity
+        end
       end
+    rescue ActiveRecord::RecordNotFound
+      error(:not_found, "That list doesn't exist")
     end
   end
 
   def show
-    item = Item.find_by(id: params[:id])
+    begin
+      item = Item.find(params[:id])
 
-    if !item
+      if not_mine?(item)
+        not_yours_error
+      else
+        render json: item
+      end
+    rescue ActiveRecord::RecordNotFound
       error(:not_found, "That item doesn't exist")
-    elsif item.user != current_user
-      error(:unprocessable_entity, "That's not your item!")
-    else
-      render json: item
     end
   end
 
   def index
     render json: current_user.items
   end
+
+  def destroy
+    begin
+      item = Item.find(params[:id])
+
+      if not_mine?(item)
+        not_yours_error
+      else
+        item.destroy
+        render json: {}, status: :no_content
+      end
+    rescue ActiveRecord::RecordNotFound
+      error(:not_found, "That item doesn't exist")
+    end
+  end
+
 
   private
 
