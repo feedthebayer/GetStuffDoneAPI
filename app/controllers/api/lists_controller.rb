@@ -24,6 +24,21 @@ class Api::ListsController < ApplicationController
     end
   end
 
+  def update
+    begin
+      list = List.find(params[:id])
+
+      if not_mine?(list)
+        not_yours_error
+      else
+        list.update(list_params)
+        render json: list
+      end
+    rescue ActiveRecord::RecordNotFound
+      error(:not_found, "That list doesn't exist")
+    end
+  end
+
   def index
     render json: current_user.lists
   end

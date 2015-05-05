@@ -19,6 +19,21 @@ class Api::UsersController < ApplicationController
     end
   end
 
+  def update
+    begin
+      user = User.find(params[:id])
+
+      if user != current_user
+        not_yours_error
+      else
+        user.update(user_params)
+        render json: user
+      end
+    rescue ActiveRecord::RecordNotFound
+      error(:not_found, "That user doesn't exist")
+    end
+  end
+
   def index
     render json: User.all
   end

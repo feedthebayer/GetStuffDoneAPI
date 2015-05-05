@@ -35,6 +35,21 @@ class Api::ItemsController < ApplicationController
     end
   end
 
+  def update
+    begin
+      item = Item.find(params[:id])
+
+      if not_mine?(item)
+        not_yours_error
+      else
+        item.update(item_params)
+        render json: item
+      end
+    rescue ActiveRecord::RecordNotFound
+      error(:not_found, "That item doesn't exist")
+    end
+  end
+
   def index
     render json: current_user.items
   end
